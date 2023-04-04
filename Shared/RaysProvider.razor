@@ -1,0 +1,17 @@
+﻿@inject IRaysTheme raysTheme
+
+<MudDialogProvider />
+<MudSnackbarProvider />
+<CascadingValue Value="@raysTheme.Theme">
+<CascadingValue Value="@raysTheme.IsPlugAndPlayMode" Name="IsPlugAndPlayMode">
+<MudThemeProvider Theme= "@raysTheme.Theme" @bind-IsDarkMode="@raysTheme.IsDarkMode"/>
+@ChildContent
+</CascadingValue>
+</CascadingValue>
+
+@code
+{
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}
+ 

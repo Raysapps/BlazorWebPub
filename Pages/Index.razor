@@ -1,0 +1,43 @@
+﻿@page "/"
+@using System.Collections.Specialized;
+@using RaysApps.Services.Message;
+@inject IMessageService messageService
+
+<div class="d-flex flex-column-reverse px-4 overflow-y: scroll;" style="margin-bottom:var(--mud-appbar-height); padding-bottom:50px ;overflow-y: scroll; max-height:300px">
+    <MudDataGrid RowsPerPage="2000" Virtualize="true" ColumnResizeMode="ResizeMode.Column" Items="@messageService.Items">
+        <Columns>
+            <PropertyColumn Property="x => x.Icon" />
+            <PropertyColumn Property="x => x.Message" />
+        </Columns>
+    </MudDataGrid>
+</div>
+
+@code
+{
+
+   
+    public record Model(string Icon, String Message);
+
+    void AddClient(string message)
+    {
+        messageService.AddClientMessage(message);
+
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        messageService.Items.CollectionChanged += OnCollectionChanged;
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+       messageService.Items.CollectionChanged -= OnCollectionChanged;
+    }
+    public void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args) => InvokeAsync(() => StateHasChanged());
+
+
+
+
+
+}

@@ -1,0 +1,101 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@using Azure.Messaging.WebPubSub.Clients;
+@using RaysApps.Models;
+@using RaysApps.Services.Message;
+@using System.Text.Json;
+@using RaysApps.Services.WebPub;
+
+@inject NavigationManager NavigationManager
+@inject IMessageService messageService
+@inject IRaysAppsWebPubClient webPub
+@inject ILogger<MainLayout> _logger
+
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h5" Class="ml-3">RaysWebPubServicesClient</MudText>
+        <MudSpacer />
+    </MudAppBar>
+    <MudMainContent>
+        <ErrorBoundary>
+            <MudText>EventType: @EventType</MudText>
+            <MudText>ConnectionId: @ConnectionId</MudText>
+            <MudText>EventConnectionId: @EventConnectionId</MudText>
+            <br />
+            <br />
+            @Body
+        </ErrorBoundary>
+    </MudMainContent>
+    <MudAppBar Bottom="true" Fixed="true" Elevation="1">
+        <MudTextField @ref="RefEntryField" @bind-Value="ChatText" Immediate="true" OnKeyDown="OnTextChatSendAsync" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="m-3" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Variant="Variant.Filled" Size="Size.Large" OnClick="PushMessageAsync"/>
+     </MudAppBar>
+</MudLayout>
+
+@code
+{
+    private MudTextField<string>? RefEntryField;
+    public string ChatText { get; set; } = "Hi WebPubService!";
+    private string? token = null;
+    private string? ConnectionId;
+    private string? EventConnectionId;
+    private string? EventType;
+    protected override async Task OnInitializedAsync()
+    {
+        // Start webpubServer.
+        webPub.StateHasChangedCallback += ConnectionCallbackAsync;
+        await webPub.StartAsync();
+        await base.OnInitializedAsync();
+    }
+    public async Task SendMessage(String message)
+    {
+        messageService.AddClientMessage(message);
+        var signalObj = new SignalData(116, message);
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        string jsonString = JsonSerializer.Serialize(signalObj, options);
+        // await signalR.Hub.SendAsync("push", signalObj);
+        await webPub.Client.SendEventAsync("push", BinaryData.FromString(jsonString), WebPubSubDataType.Json);
+
+    }
+
+
+    public async Task ConnectionCallbackAsync(string eventType)
+    {
+        await InvokeAsync(()=>
+        {
+            EventType = eventType;
+            ConnectionId =  webPub.Client?.ConnectionId;
+            EventConnectionId = webPub.EventConnectionId;
+            StateHasChanged();
+        });
+    }
+    private void ReceiveMessage(SignalData data)
+    {
+        messageService.AddServerMessage(data.Value);
+    }
+
+    private async Task OnTextChatSendAsync(KeyboardEventArgs args)
+    {
+        if (args.Key is not "Enter" or "NumpadEnter")
+            return;
+        var message = ChatText;
+        ChatText = string.Empty;
+        await SendMessage(message);
+        StateHasChanged();
+    }
+
+    private async Task PushMessageAsync()
+    {
+        var message = ChatText;
+        ChatText = string.Empty;
+        await SendMessage(message);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        webPub.StateHasChangedCallback -= ConnectionCallbackAsync;
+    }
+}
+
