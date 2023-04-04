@@ -6,13 +6,14 @@ Project Services
 The sample project includes the following services:
 
 RaysAppsWebPubClient
-The RaysAppsWebPubClient class encapsulates the code for connecting to the WebPubClient and handling its events.
+The RaysAppsWebPubClient class encapsulates the code for connecting and handling events to the WebPubClient.
 
 MessagesService
 The MessagesService class adds sent and received messages to an Observable collection.
 
-ThemeService
-The ThemeService is an encapsulated GUI theme service that provides additional functionality.
+GUI ThemeService
 
-Usage
-To use this project, you will need to have an Azure Web PubSub service set up, and provide its connection details in the project. Once the connection details are set up, you can run the project and test its functionality.
+Dependencies:
+Azure.Messaging.WebPubSub.Client 1.0.0-beta.2
+MudBlazor 6.2.0
+
